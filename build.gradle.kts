@@ -1,51 +1,74 @@
-import java.nio.charset.Charset
-
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
-    kotlin("jvm") version "1.7.20-Beta"
+    id("fabric-loom").version(Dependency.Loom.Version)
+    kotlin("jvm").version(Dependency.Kotlin.Version)
 }
+
+base { archivesName.set(project.extra["archives_base_name"] as String) }
+version = project.extra["mod_version"] as String
+group = project.extra["maven_group"] as String
+
+val fabricLanguageKotlin =
+    project.extra["fabric_language_kotlin_version"] as String + "+kotlin.${Dependency.Kotlin.Version}"
+
+val yarnBuild =
+    Dependency.Minecraft.Version + "+build.${Dependency.Yarn.Build}"
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-}
+    minecraft("com.mojang", "minecraft", Dependency.Minecraft.Version)
+    mappings("net.fabricmc", "yarn", yarnBuild, null, "v2")
+    modImplementation("net.fabricmc", "fabric-loader", project.extra["loader_version"] as String)
+    modImplementation("net.fabricmc.fabric-api", "fabric-api", project.extra["fabric_version"] as String)
+    modImplementation("net.fabricmc", "fabric-language-kotlin", fabricLanguageKotlin)
 
-repositories {
-    mavenCentral()
-}
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    jvmTarget = "18"
-}
-val compileTestKotlin: KotlinCompile by tasks
-compileTestKotlin.kotlinOptions {
-    jvmTarget = "18"
-}
-
-abstract class SetupTask : DefaultTask() {
-    private var isIgnored: Boolean = true
-    private var multiModule: Boolean = false
-
-    @Option(option = "multiModule", description = "")
-    fun setMulti(multiModule: String) {
-        this.multiModule = multiModule.toBoolean()
-        isIgnored = false
-    }
-
-    @TaskAction
-    fun process() {
-        if (!this.isIgnored) {
-            if (this.multiModule) {
-                File("./src").deleteRecursively()
-            } else {
-                File("./backend").deleteRecursively()
-                File("./frontend").deleteRecursively()
-                File("./settings.gradle.kts").writeText("", Charset.forName("utf8"))
-            }
-        }
-    }
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-Beta")
 }
 
 tasks {
-    register<SetupTask>("setupWorkspace")
+    val javaVersion = JavaVersion.toVersion(Dependency.Java.Version.toInt())
+    withType<JavaCompile> {
+        options.encoding = "UTF-8"
+        sourceCompatibility = javaVersion.toString()
+        targetCompatibility = javaVersion.toString()
+        options.release.set(javaVersion.toString().toInt())
+    }
+
+    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        kotlinOptions {
+            jvmTarget = javaVersion.toString()
+        }
+    }
+
+    jar { from("LICENSE") { rename { "${it}_${base.archivesName}" } } }
+
+    processResources {
+        filesMatching("fabric.mod.json") {
+            expand(
+                mutableMapOf(
+                    "version" to project.extra["mod_version"] as String,
+                    "fabricloader" to project.extra["loader_version"] as String,
+                    "fabric_api" to project.extra["fabric_version"] as String,
+                    "fabric_language_kotlin" to fabricLanguageKotlin,
+                    "minecraft" to Dependency.Minecraft.Version,
+                    "java" to Dependency.Java.Version,
+
+                    "mod_id" to project.extra["mod_id"] as String
+                )
+            )
+        }
+
+        filesMatching("*.mixins.json") {
+            expand(mutableMapOf("java" to Dependency.Java.Version))
+        }
+
+        filesMatching("**/*.json") {
+            expand(mutableMapOf("mod_id" to project.extra["mod_id"] as String))
+        }
+    }
+
+    java {
+        toolchain { languageVersion.set(JavaLanguageVersion.of(javaVersion.toString())) }
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
+        withSourcesJar()
+    }
 }

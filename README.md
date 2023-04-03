@@ -1,1 +1,1 @@
-# gradle-kotlin-template
+# fabric-mod-template
