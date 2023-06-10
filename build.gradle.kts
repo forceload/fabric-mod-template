@@ -21,6 +21,7 @@ dependencies {
     modImplementation("net.fabricmc", "fabric-language-kotlin", fabricLanguageKotlin)
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-Beta")
+    modImplementation("com.github.forceload:uilib:fbcf2e508a")
 }
 
 tasks {
