@@ -24,6 +24,15 @@ dependencies {
     modImplementation("com.github.forceload:uilib:fbcf2e508a")
 }
 
+repositories {
+    maven {
+        url = uri("https://jitpack.io")
+        name = "JitPack"
+    }
+
+    mavenCentral()
+}
+
 tasks {
     val javaVersion = JavaVersion.toVersion(Dependency.Java.Version.toInt())
     withType<JavaCompile> {
