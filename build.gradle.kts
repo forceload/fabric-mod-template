@@ -58,7 +58,7 @@ tasks {
         }
 
         filesMatching("*.mixins.json") {
-            expand(mutableMapOf("java" to Dependency.Java.Version))
+            expand(mutableMapOf("java" to Dependency.Java.Version, "mod_id" to project.extra["mod_id"] as String))
         }
 
         filesMatching("**/*.json") {
