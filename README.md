@@ -1,4 +1,5 @@
 # FabricMC Mod Template
+This project is no longer maintained. The new FabricMC Kotlin template is [available here](https://github.com/forceload/fabric-kotlin-template)
 - Simple FabricMC Mod Template Using Gradle Kotlin DSL
 
 ---
